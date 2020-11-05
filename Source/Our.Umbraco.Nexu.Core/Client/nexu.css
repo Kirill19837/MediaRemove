@@ -1,0 +1,61 @@
+﻿ul.nexu-links {
+    list-style: none;
+    margin-left: 0px;
+}
+
+ul.nexu-links span.deleted {
+    text-decoration: line-through;
+}
+
+ul.nexu-links span.unpublished {
+    font-style: italic;
+    opacity: 0.5;
+}
+
+
+div.nexu-properties {
+    margin-left: 25px;
+    font-size: 85%;
+}
+
+.unpublish-confirmation ul.nexu-links {
+    padding-left: 0px;
+    overflow: scroll;
+    max-height: 200px;
+}
+
+
+.alert .nexu-links a {
+    color: #555;
+}
+
+.hidden-input {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+}
+
+.input-label {
+    margin-bottom: 0px;
+}
+
+input.hidden-input:focus + label {
+    outline: thin dotted;
+}
+
+input.hidden-input:focus-within + label {
+    outline: thin dotted;
+}
+
+.input-source {
+    border: 1px dashed black;
+    padding: 5px 14px;
+    margin-left: 20px;
+}
+
+.nexu-container {
+    display: flex;
+    align-items: center;
+}
