@@ -1,0 +1,10 @@
+﻿{
+  "javascript": [
+    "~/App_Plugins/MediaRemove/resource.js",
+    "~/App_Plugins/MediaRemove/dashboard-controller.js",
+    "~/App_Plugins/MediaRemove/upload.js"
+  ],
+  "css": [
+    "~/App_Plugins/MediaRemove/style.css"
+  ]
+}
