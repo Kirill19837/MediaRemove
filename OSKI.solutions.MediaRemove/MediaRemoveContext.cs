@@ -21,5 +21,8 @@ namespace OSKI.solutions.MediaRemove
         public static MediaRemoveContext Current => instance ?? new MediaRemoveContext();
         public ConcurrentBag<MediaItemWrapper> UnusedMedia { get; set; }
         public bool IsProcessingMedia { get; set; }
+        public bool IsProcessingDeleting { get; set; }
+        public int ItemsToProcess { get; set; }
+        public int ItemsProcessed { get; set; }
     }
 }

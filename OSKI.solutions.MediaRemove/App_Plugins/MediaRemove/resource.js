@@ -18,6 +18,9 @@
                 },
                 getBuiltStatus : function() {
                     return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.IsBuilt);
+                },
+                getDeleteMediaStatus: function () {
+                    return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.DeleteUnusedMediaStatus);
                 }
             };
         });

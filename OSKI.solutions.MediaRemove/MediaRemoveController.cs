@@ -17,7 +17,7 @@ using Umbraco.Web.Editors;
 
 namespace OSKI.solutions.MediaRemove
 {
-    public class MediaRemoveController: UmbracoAuthorizedJsonController
+    public class MediaRemoveController : UmbracoAuthorizedJsonController
     {
         private readonly IMediaService mediaService;
         private readonly NexuService nexuService;
@@ -35,10 +35,10 @@ namespace OSKI.solutions.MediaRemove
         [HttpGet]
         public HttpResponseMessage GetUnusedMedia()
         {
-            Thread backgroundRebuild = new Thread(FindUnusedMedia);
-            backgroundRebuild.IsBackground = true;
-            backgroundRebuild.Name = "MediaRemove GetUnusedMedia";
-            backgroundRebuild.Start();
+            Thread backgroundGetMedia = new Thread(FindUnusedMedia);
+            backgroundGetMedia.IsBackground = true;
+            backgroundGetMedia.Name = "MediaRemove GetUnusedMedia";
+            backgroundGetMedia.Start();
 
             return new HttpResponseMessage(HttpStatusCode.OK);
         }
@@ -49,13 +49,22 @@ namespace OSKI.solutions.MediaRemove
             return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingMedia, Data = mediaRemoveContext.UnusedMedia.Select(x => x.Model) });
         }
 
+        [HttpGet]
+        public HttpResponseMessage DeleteUnusedMediaStatus()
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingDeleting, mediaRemoveContext.ItemsToProcess, mediaRemoveContext.ItemsProcessed, });
+        }
+
         [HttpPost]
         public HttpResponseMessage DeleteUnusedMedia(int[] ids)
         {
-            foreach (var id in ids)
+            Thread backgroundDelete = new Thread(new ParameterizedThreadStart(DeleteMedia))
             {
-                mediaService.Delete(mediaService.GetById(id));
-            }
+                IsBackground = true,
+                Name = "MediaRemove DeleteMedia"
+            };
+            backgroundDelete.Start(ids);
+
             return new HttpResponseMessage(HttpStatusCode.OK);
         }
 
@@ -94,6 +103,24 @@ namespace OSKI.solutions.MediaRemove
                 GetUnusedMediaItems(new MediaItemWrapper(mediaItem));
             }
             mediaRemoveContext.IsProcessingMedia = false;
+        }
+
+        private void DeleteMedia(object packed)
+        {
+            int[] ids = (int[])packed;
+
+            mediaRemoveContext.IsProcessingDeleting = true;
+            mediaRemoveContext.ItemsToProcess = ids.Length;
+            mediaRemoveContext.ItemsProcessed = 0;
+
+            foreach (var id in ids)
+            {
+                mediaService.Delete(mediaService.GetById(id));
+                mediaRemoveContext.ItemsProcessed++;
+            }
+
+            mediaRemoveContext.IsProcessingDeleting = false;
+            mediaRemoveContext.UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
         }
     }
 }

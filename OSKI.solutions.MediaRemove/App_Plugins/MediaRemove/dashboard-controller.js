@@ -11,6 +11,11 @@
             IsProcessingMedia: false,
             Data : []
         };
+        $scope.DeleteStatus = {
+            IsProcessingDeleting: false,
+            ItemsProcessed: 0,
+            ItemsToProcess: 0
+        }
         $scope.filteredMedia = [];
         $scope.autoRefresh = true;
         $scope.exceptionListSource = null;
@@ -86,18 +91,26 @@
                 return;
             }
             let forDeleting = [];
-            let forLeaving = [];
             $scope.filteredMedia.forEach((x) => {
                 if (x.ToRemove) {
                     forDeleting.push(x);
-                } else {
-                    forLeaving.push(x);
                 }
             });
             let ids = forDeleting.map(x => x.Id);
             mediaRemoveResource.deleteUnusedMedia(ids)
                 .then(function () {
-                    $scope.filteredMedia = forLeaving;
+                    $scope.getDeleteMediaStatus();
+                    $scope.filteredMedia = [];
+                });
+        };
+
+        $scope.getDeleteMediaStatus = function () {
+            mediaRemoveResource.getDeleteMediaStatus()
+                .then(function ({ data }) {
+                    $scope.DeleteStatus = data;
+                    if ($scope.DeleteStatus.IsProcessingDeleting) {
+                        $timeout(function () { $scope.getDeleteMediaStatus() }, 5000, true);
+                    }
                 });
         };
 
@@ -124,4 +137,5 @@
         $scope.getRebuildStatus();
         $scope.getUnusedMediaStatus();
         $scope.getBuiltStatus();
+        $scope.getDeleteMediaStatus();
     }]);

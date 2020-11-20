@@ -1,7 +1,7 @@
 ﻿<div ng-controller="Our.Umbraco.MediaRemove.DashboardController">
     <div ng-hide="isLoading">
-        <p>After installation you should call once "Rebuild relations". You can remove unused media by pressing "GetUnusedMedia", wait for operation to complete and press "Delete found media". You can load exclusion list to not remove required media items which has no reference in content. Exclusion list is .txt file, which contains urls of media items.The URL should look like this "/media/1127/logo.png". All operations except deleting are made in background so you can switch or close tab.</p>
-        <div ng-hide="RebuildStatus.IsProcessing" class="dashboard-container">
+        <p>After installation you should call once "Rebuild relations". You can remove unused media by pressing "GetUnusedMedia", wait for operation to complete and press "Delete found media". You can load exclusion list to not remove required media items which has no reference in content. Exclusion list is .txt file, which contains urls of media items.The URL should look like this "/media/1127/logo.png". All operations are made in background so you can switch or close tab.</p>
+        <div ng-hide="RebuildStatus.IsProcessing || DeleteStatus.IsProcessingDeleting" class="dashboard-container">
             <div class="btn-group">
                 <a class="btn" ng-click="rebuild()" ng-disabled="isBuiltRelations" prevent-default>
                     Rebuild relations
@@ -24,7 +24,7 @@
                 Rebuilding relations in progress ({{RebuildStatus.ItemsProcessed}} items processed)
             </p>
             <p>
-                <input type="checkbox" ng-model="autoRefresh" ng-checked="autoRefresh"/> Auto-refresh every 5 seconds
+                <input type="checkbox" ng-model="autoRefresh" ng-checked="autoRefresh" /> Auto-refresh every 5 seconds
             </p>
             <p ng-hide="autoRefresh">
                 <a class="btn" ng-click="getRebuildStatus()" prevent-default>
@@ -32,27 +32,32 @@
                 </a>
             </p>
         </div>
+        <div ng-show="DeleteStatus.IsProcessingDeleting">
+            <p>
+                Deleting media in progress ({{DeleteStatus.ItemsProcessed}} items processed out of {{DeleteStatus.ItemsToProcess}})
+            </p>
+        </div>
         <div ng-show="filteredMedia.length != 0">
             <table class="table">
                 <caption>Unused media</caption>
                 <thead>
-                <tr>
-                    <th>Index</th>
-                    <th>Name</th>
-                    <th>Path</th>
-                    <th>Source</th>
-                    <th>ToRemove</th>
-                </tr>
+                    <tr>
+                        <th>Index</th>
+                        <th>Name</th>
+                        <th>Path</th>
+                        <th>Source</th>
+                        <th>ToRemove</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="link in filteredMedia">
-                    <td>{{$index + 1}}</td>
-                    <td>{{link.Name}}</td>
-                    <td>{{link.Path}}</td>
-                    <td ng-show="link.Source != null"><a href="{{link.Source}}">Source</a></td>
-                    <td ng-show="link.Source == null">Source not available</td>
-                    <td><input type="checkbox" ng-model="filteredMedia[$index].ToRemove"/></td>
-                </tr>
+                    <tr ng-repeat="link in filteredMedia">
+                        <td>{{$index + 1}}</td>
+                        <td>{{link.Name}}</td>
+                        <td>{{link.Path}}</td>
+                        <td ng-show="link.Source != null"><a href="{{link.Source}}">Source</a></td>
+                        <td ng-show="link.Source == null">Source not available</td>
+                        <td><input type="checkbox" ng-model="filteredMedia[$index].ToRemove" /></td>
+                    </tr>
                 </tbody>
             </table>
         </div>

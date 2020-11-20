@@ -35,7 +35,8 @@ namespace OSKI.solutions.MediaRemove
                 { "GetUnusedMedia", urlHelper.GetUmbracoApiService<MediaRemoveController>("GetUnusedMedia", null) },
                 { "DeleteUnusedMedia", urlHelper.GetUmbracoApiService<MediaRemoveController>("DeleteUnusedMedia", null) },
                 { "GetUnusedMediaStatus", urlHelper.GetUmbracoApiService<MediaRemoveController>("GetUnusedMediaStatus", null) },
-                { "IsBuilt", urlHelper.GetUmbracoApiService<MediaRemoveController>("IsBuilt", null) }
+                { "IsBuilt", urlHelper.GetUmbracoApiService<MediaRemoveController>("IsBuilt", null) },
+                {"DeleteUnusedMediaStatus", urlHelper.GetUmbracoApiService<MediaRemoveController>("DeleteUnusedMediaStatus", null) }
             };
 
             if (!e.Keys.Contains("MediaRemove"))
