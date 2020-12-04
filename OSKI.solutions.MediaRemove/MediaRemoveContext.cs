@@ -22,7 +22,8 @@ namespace OSKI.solutions.MediaRemove
         public ConcurrentBag<MediaItemWrapper> UnusedMedia { get; set; }
         public bool IsProcessingMedia { get; set; }
         public bool IsProcessingDeleting { get; set; }
-        public int ItemsToProcess { get; set; }
-        public int ItemsProcessed { get; set; }
+        public int ItemsToProcessDeleting { get; set; }
+        public int DeletedItemsProcessed { get; set; }
+        public int TotalAmountOfMedia { get; set; }
     }
 }

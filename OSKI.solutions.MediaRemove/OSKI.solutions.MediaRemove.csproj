@@ -252,7 +252,6 @@
     <Compile Include="MediaRemoveService.cs" />
     <Compile Include="Models\MediaItemWrapper.cs" />
     <Compile Include="Models\UnusedMedia.cs" />
-    <Compile Include="PackageRegistration.cs" />
     <Compile Include="UmbracoEventHandler.cs" />
   </ItemGroup>
   <ItemGroup>

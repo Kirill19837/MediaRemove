@@ -1,22 +1,43 @@
 ﻿<div ng-controller="Our.Umbraco.MediaRemove.DashboardController">
     <div ng-hide="isLoading">
-        <p>After installation you should call once "Rebuild relations". You can remove unused media by pressing "GetUnusedMedia", wait for operation to complete and press "Delete found media". You can load exclusion list to not remove required media items which has no reference in content. Exclusion list is .txt file, which contains urls of media items.The URL should look like this "/media/1127/logo.png". All operations are made in background so you can switch or close tab.</p>
-        <div ng-hide="RebuildStatus.IsProcessing || DeleteStatus.IsProcessingDeleting" class="dashboard-container">
-            <div class="btn-group">
-                <a class="btn" ng-click="rebuild()" ng-disabled="isBuiltRelations" prevent-default>
-                    Rebuild relations
-                </a>
-                <a class="btn" ng-click="getUnusedMedia()" ng-disabled="unusedMedia.IsProcessingMedia" prevent-default>
-                    Get unused media
-                </a>
-                <a class="btn" ng-click="deleteUnusedMedia()" ng-disabled="filteredMedia.length == 0 && unusedMedia.IsProcessingMedia" prevent-default>
-                    Delete found media
-                </a>
-                <input class="hidden-input" id="exceptionListLoader" type="file" class="btn" on-read-file="showContent( fileContent, fileName )">
-                <label class="input-label btn" for="exceptionListLoader">Load exclusion list</label>
+        <ul>
+            <li>
+                <p>After installation you should call once "Rebuild relations". </p>
+            </li>
+            <li>
+                <p>
+                    You can remove unused media by pressing "GetUnusedMedia", wait for operation to complete and press "Delete found media".
+                </p>
+            </li>
+            <li>
+                <p>You can load exclusion list to not remove required media items which has no reference in content. Exclusion list is .txt file, which contains URLs of media items. The URL should look like this "/media/1127/logo.png". All operations are made in background so you can switch or close tab.</p>
+            </li>
+        </ul>
+        <div ng-hide="RebuildStatus.IsProcessing || DeleteStatus.IsProcessingDeleting">
+            <div class="status-container">
+                <div class="btn-group">
+                    <a class="btn" ng-click="rebuild()" ng-disabled="isBuiltRelations" prevent-default>
+                        Rebuild relations
+                    </a>
+                    <a class="btn" ng-click="getUnusedMedia()" ng-disabled="unusedMedia.IsProcessingMedia" prevent-default>
+                        Get unused media
+                    </a>
+                    <a class="btn" ng-click="deleteUnusedMedia()" ng-disabled="filteredMedia.length == 0 && unusedMedia.IsProcessingMedia" prevent-default>
+                        Delete found media
+                    </a>
+                    <input class="hidden-input" id="exceptionListLoader" type="file" class="btn" on-read-file="showContent( fileContent, fileName )">
+                    <label class="input-label btn" for="exceptionListLoader">Load exclusion list</label>
+                </div>
+                <div class="input-source" ng-show="exceptionListSource">
+                    {{exceptionListSource}}
+                </div>
+                <div ng-show="RebuildStatus.IsProcessing || DeleteStatus.IsProcessingDeleting || unusedMedia.IsProcessingMedia">
+                    <img class="loader" src="/App_Plugins/MediaRemove/loading-gif.gif">
+                </div>
             </div>
-            <div class="input-source" ng-show="exceptionListSource">
-                {{exceptionListSource}}
+            <div>
+                <div>Found unused media: {{unusedMedia.Data.length}} of {{unusedMedia.TotalCount}} total media.</div>
+                <div>Amount of to be deleted media: {{toBeDeletedAmount}}</div>
             </div>
         </div>
         <div ng-show="RebuildStatus.IsProcessing">
@@ -56,7 +77,7 @@
                         <td>{{link.Path}}</td>
                         <td ng-show="link.Source != null"><a href="{{link.Source}}">Source</a></td>
                         <td ng-show="link.Source == null">Source not available</td>
-                        <td><input type="checkbox" ng-model="filteredMedia[$index].ToRemove" /></td>
+                        <td><input type="checkbox" ng-model="filteredMedia[$index].ToRemove" ng-change="toRemoveChanged($index)"/></td>
                     </tr>
                 </tbody>
             </table>

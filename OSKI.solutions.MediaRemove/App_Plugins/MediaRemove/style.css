@@ -24,7 +24,13 @@ input.hidden-input:focus-within + label {
     margin-left: 20px;
 }
 
-.dashboard-container {
+.status-container {
     display: flex;
     align-items: center;
+}
+
+.loader {
+    max-width: 100%;
+    height: auto;
+    width: 50px;
 }

@@ -9,7 +9,8 @@
         $scope.isBuiltRelations = false;
         $scope.unusedMedia = {
             IsProcessingMedia: false,
-            Data : []
+            Data: [],
+            TotalCount: 0
         };
         $scope.DeleteStatus = {
             IsProcessingDeleting: false,
@@ -20,6 +21,7 @@
         $scope.autoRefresh = true;
         $scope.exceptionListSource = null;
         $scope.exceptionSources = [];
+        $scope.toBeDeletedAmount = 0;
 
         $scope.getRebuildStatus = function () {
             mediaRemoveResource.getRebuildStatus()
@@ -45,7 +47,7 @@
             $timeout(function () { $scope.getRebuildStatus() }, 500, true);
         };
 
-        $scope.getBuiltStatus = function() {
+        $scope.getBuiltStatus = function () {
             mediaRemoveResource.getBuiltStatus().then(function ({ data }) {
                 $scope.isBuiltRelations = data.IsBuilt;
             });
@@ -61,24 +63,27 @@
                 });
         };
 
-        $scope.getUnusedMediaStatus = function() {
+        $scope.getUnusedMediaStatus = function () {
             mediaRemoveResource.getUnusedMediaStatus()
                 .then(function ({ data }) {
-                    console.log(data);
                     $scope.unusedMedia = data;
+                    let count = 0;
                     data.Data.forEach((x) => {
                         x.ToRemove = true;
+                        count++;
                         if (x.Source) {
                             try {
                                 x.Source = JSON.parse(x.Source).src;
                             } catch (ex) {
-                                console.log(ex);
+                                if(console) console.log(ex);
                             }
                             if ($scope.exceptionSources.indexOf(x.Source) > -1) {
                                 x.ToRemove = false;
+                                countr--;
                             }
                         }
                     });
+                    $scope.toBeDeletedAmount = count;
                     $scope.filteredMedia = data.Data;
                     if ($scope.unusedMedia.IsProcessingMedia) {
                         $timeout(function () { $scope.getUnusedMediaStatus() }, 5000, true);
@@ -120,18 +125,28 @@
             }
         }, true);
 
-
-        $scope.showContent = function ( fileContent, fileName ) {
+        $scope.showContent = function (fileContent, fileName) {
             $scope.exceptionListSource = fileName;
-            $scope.exceptionSources = fileContent.split(/\r\n|\n/);;
+            $scope.exceptionSources = fileContent.split(/\r\n|\n/);
+            let count = 0;
             $scope.unusedMedia.Data.forEach((x) => {
                 if ($scope.exceptionSources.indexOf(x.Source) > -1) {
                     x.ToRemove = false;
                 } else {
                     x.ToRemove = true;
+                    count++;
                 }
             });
             $scope.filteredMedia = $scope.unusedMedia.Data;
+            $scope.toBeDeletedAmount = count;
+        }
+
+        $scope.toRemoveChanged = function (index) {
+            if ($scope.filteredMedia[index].ToRemove) {
+                $scope.toBeDeletedAmount++;
+            } else {
+                $scope.toBeDeletedAmount--;
+            }
         }
 
         $scope.getRebuildStatus();

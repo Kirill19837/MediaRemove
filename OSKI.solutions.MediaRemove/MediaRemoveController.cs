@@ -46,13 +46,13 @@ namespace OSKI.solutions.MediaRemove
         [HttpGet]
         public HttpResponseMessage GetUnusedMediaStatus()
         {
-            return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingMedia, Data = mediaRemoveContext.UnusedMedia.Select(x => x.Model) });
+            return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingMedia, Data = mediaRemoveContext.UnusedMedia.Select(x => x.Model), TotalCount = mediaRemoveContext.TotalAmountOfMedia });
         }
 
         [HttpGet]
         public HttpResponseMessage DeleteUnusedMediaStatus()
         {
-            return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingDeleting, mediaRemoveContext.ItemsToProcess, mediaRemoveContext.ItemsProcessed, });
+            return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingDeleting, ItemsToProcess = mediaRemoveContext.ItemsToProcessDeleting, ItemsProcessed = mediaRemoveContext.DeletedItemsProcessed, });
         }
 
         [HttpPost]
@@ -77,6 +77,7 @@ namespace OSKI.solutions.MediaRemove
         {
             var childs = root.Media.Children();
             bool found = false;
+            mediaRemoveContext.TotalAmountOfMedia += childs.Count();
             foreach (var mediaItem in childs)
             {
                 found = true;
@@ -97,7 +98,9 @@ namespace OSKI.solutions.MediaRemove
         {
             mediaRemoveContext.UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
             mediaRemoveContext.IsProcessingMedia = true;
+            mediaRemoveContext.TotalAmountOfMedia = 0;
             var mediaItems = mediaService.GetRootMedia();
+            mediaRemoveContext.TotalAmountOfMedia += mediaItems.Count();
             foreach (var mediaItem in mediaItems)
             {
                 GetUnusedMediaItems(new MediaItemWrapper(mediaItem));
@@ -110,13 +113,14 @@ namespace OSKI.solutions.MediaRemove
             int[] ids = (int[])packed;
 
             mediaRemoveContext.IsProcessingDeleting = true;
-            mediaRemoveContext.ItemsToProcess = ids.Length;
-            mediaRemoveContext.ItemsProcessed = 0;
+            mediaRemoveContext.ItemsToProcessDeleting = ids.Length;
+            mediaRemoveContext.DeletedItemsProcessed = 0;
+            mediaRemoveContext.TotalAmountOfMedia = 0;
 
             foreach (var id in ids)
             {
                 mediaService.Delete(mediaService.GetById(id));
-                mediaRemoveContext.ItemsProcessed++;
+                mediaRemoveContext.DeletedItemsProcessed++;
             }
 
             mediaRemoveContext.IsProcessingDeleting = false;
