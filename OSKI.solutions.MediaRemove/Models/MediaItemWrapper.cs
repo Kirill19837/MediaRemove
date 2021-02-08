@@ -32,7 +32,7 @@ namespace OSKI.solutions.MediaRemove.Models
                 Name = media.Name,
                 Path = $"{media.Name}",
                 Id = media.Id,
-                Source = media.GetValue<string>("umbracoFile")
+                Source = media.HasProperty("umbracoFile") ? media.GetValue<string>("umbracoFile") : null
             };
         }
     }
