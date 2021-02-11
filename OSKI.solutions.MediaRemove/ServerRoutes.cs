@@ -4,21 +4,22 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 
-using Umbraco.Core;
+using Umbraco.Core.Composing;
 using Umbraco.Web;
-using Umbraco.Web.UI.JavaScript;
+using Umbraco.Web.JavaScript;
 
 namespace OSKI.solutions.MediaRemove
 {
-    internal class UmbracoEventHandler : ApplicationEventHandler
+    internal class ServerRoutes : IComponent
     {
-        protected override void ApplicationStarted(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
+        public void Initialize()
         {
-            using (ApplicationContext.Current.ProfilingLogger.TraceDuration<UmbracoEventHandler>("Begin ApplicationStarted", "End ApplicationStarted"))
-            {
-                // setup server variables
-                ServerVariablesParser.Parsing += this.ServerVariablesParserParsing;
-            }
+            ServerVariablesParser.Parsing += this.ServerVariablesParserParsing;
+        }
+
+        public void Terminate()
+        {
+            ServerVariablesParser.Parsing -= this.ServerVariablesParserParsing;
         }
 
         private void ServerVariablesParserParsing(object sender, Dictionary<string, object> e)
@@ -36,9 +37,9 @@ namespace OSKI.solutions.MediaRemove
                 { "DeleteUnusedMedia", urlHelper.GetUmbracoApiService<MediaRemoveController>("DeleteUnusedMedia", null) },
                 { "GetUnusedMediaStatus", urlHelper.GetUmbracoApiService<MediaRemoveController>("GetUnusedMediaStatus", null) },
                 { "IsBuilt", urlHelper.GetUmbracoApiService<MediaRemoveController>("IsBuilt", null) },
-                {"DeleteUnusedMediaStatus", urlHelper.GetUmbracoApiService<MediaRemoveController>("DeleteUnusedMediaStatus", null) }
+                { "DeleteUnusedMediaStatus", urlHelper.GetUmbracoApiService<MediaRemoveController>("DeleteUnusedMediaStatus", null) },
+                { "RebuildApi", urlHelper.GetUmbracoApiServiceBaseUrl<MediaRemoveController>(c => c.GetRebuildStatus()) }
             };
-
             if (!e.Keys.Contains("MediaRemove"))
             {
                 e.Add("MediaRemove", urlDictionairy);

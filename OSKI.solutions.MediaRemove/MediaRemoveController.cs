@@ -1,16 +1,15 @@
-﻿using AutoMapper;
-using OSKI.solutions.MediaRemove.Models;
-using Our.Umbraco.Nexu.Core;
+﻿using OSKI.solutions.MediaRemove.Models;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Web.Http;
+using Our.Umbraco.Nexu.Common;
+using Our.Umbraco.Nexu.Common.Interfaces.Services;
+using Umbraco.Core;
+using Umbraco.Core.Logging;
 using Umbraco.Core.Models;
 using Umbraco.Core.Services;
 using Umbraco.Web.Editors;
@@ -19,16 +18,24 @@ namespace OSKI.solutions.MediaRemove
 {
     public class MediaRemoveController : UmbracoAuthorizedJsonController
     {
-        private readonly IMediaService mediaService;
-        private readonly NexuService nexuService;
         private readonly MediaRemoveService mediaRemoveService;
+        private readonly IEntityRelationService nexuService;
+        private readonly IEntityParsingService entityParsingService;
+        private readonly IContentService contentService;
+        private readonly IMediaService mediaService;
+        private readonly ILogger logger;
+
         private readonly MediaRemoveContext mediaRemoveContext;
 
-        public MediaRemoveController()
+        public MediaRemoveController(MediaRemoveService mediaRemoveService, IEntityRelationService nexuService, IEntityParsingService entityParsingService, IContentService contentService, IMediaService mediaService, ILogger logger)
         {
-            this.mediaService = this.Services.MediaService;
-            this.nexuService = NexuService.Current;
-            mediaRemoveService = MediaRemoveService.Current;
+            this.mediaRemoveService = mediaRemoveService;
+            this.nexuService = nexuService;
+            this.entityParsingService = entityParsingService;
+            this.contentService = contentService;
+            this.mediaService = mediaService;
+            this.logger = logger;
+            
             mediaRemoveContext = MediaRemoveContext.Current;
         }
 
@@ -73,12 +80,87 @@ namespace OSKI.solutions.MediaRemove
         {
             return Request.CreateResponse(HttpStatusCode.OK, new { IsBuilt = mediaRemoveService.IsBuilt() });
         }
+
+        [HttpGet]
+        public HttpResponseMessage GetRebuildStatus()
+        {
+            var model = new 
+            {
+                NexuContext.Current.IsProcessing,
+                NexuContext.Current.ItemsProcessed,
+                ItemName = NexuContext.Current.ItemInProgress
+            };
+
+            return this.Request.CreateResponse(HttpStatusCode.OK, model);
+        }
+
+        [HttpGet]
+        public HttpResponseMessage Rebuild()
+        {
+            ThreadPool.QueueUserWorkItem(new WaitCallback(this.RebuildJob));
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        }
+
+        public void RebuildJob(object state)
+        {
+            try
+            {
+                NexuContext.Current.IsProcessing = true;
+
+                var rootLevelItems = this.contentService.GetRootContent().ToList();
+
+                foreach (var item in rootLevelItems)
+                {
+                    this.ParseContent(item);
+                }
+
+                long totalRecords = 0;
+                rootLevelItems = this.contentService.GetPagedChildren(
+                    Constants.System.RecycleBinContent,
+                    0,
+                    int.MaxValue,
+                    out totalRecords).ToList();
+
+                foreach (var item in rootLevelItems)
+                {
+                    this.ParseContent(item);
+                }
+            }
+            catch (Exception e)
+            {
+                this.logger.Error<MediaRemoveController>("An unhandled exception occurred while parsing content", e);
+            }
+            finally
+            {
+                NexuContext.Current.IsProcessing = false;
+                NexuContext.Current.ItemsProcessed = 0;
+                NexuContext.Current.ItemInProgress = string.Empty;
+            }
+        }
+
+        private void ParseContent(IContent item)
+        {
+            NexuContext.Current.ItemInProgress = item.Name;
+            this.entityParsingService.ParseContent(item);
+            NexuContext.Current.ItemsProcessed++;
+
+            long totalRecords = 0;
+            var children = this.contentService.GetPagedChildren(item.Id, 0, int.MaxValue, out totalRecords).ToList();
+
+            foreach (var child in children)
+            {
+                // parse the content
+                this.ParseContent(child);
+            }
+        }
+
         private void GetUnusedMediaItems(MediaItemWrapper root)
         {
-            var childs = root.Media.Children();
+            var children = this.mediaService.GetPagedChildren(root.Media.Id, 0, int.MaxValue, out long totalRecords).ToList();
             bool found = false;
-            mediaRemoveContext.TotalAmountOfMedia += childs.Count();
-            foreach (var mediaItem in childs)
+            mediaRemoveContext.TotalAmountOfMedia += children.Count();
+            foreach (var mediaItem in children)
             {
                 found = true;
                 GetUnusedMediaItems(new MediaItemWrapper(mediaItem, root));
@@ -89,7 +171,7 @@ namespace OSKI.solutions.MediaRemove
                 return;
             }
 
-            var relations = nexuService.GetNexuRelationsForContent(root.Media.Id, false);
+            var relations = nexuService.GetRelationsForItem(root.Media.GetUdi());
             if (!relations.Any())
                 mediaRemoveContext.UnusedMedia.Add(root);
         }

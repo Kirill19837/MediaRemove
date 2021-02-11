@@ -1,10 +1,4 @@
-﻿using Our.Umbraco.Nexu.Core.Constants;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Umbraco.Core;
+﻿using Our.Umbraco.Nexu.Common.Constants;
 using Umbraco.Core.Services;
 
 namespace OSKI.solutions.MediaRemove
@@ -19,12 +13,10 @@ namespace OSKI.solutions.MediaRemove
             this.relationService = relationService;
         }
 
-        public static MediaRemoveService Current => service ?? new MediaRemoveService(ApplicationContext.Current.Services.RelationService);
-
         public bool IsBuilt()
         {
-            var docToDoc = relationService.GetRelationTypeByAlias(RelationTypes.DocumentToDocumentAlias);
-            var docToMedia = relationService.GetRelationTypeByAlias(RelationTypes.DocumentToMediaAlias);
+            var docToDoc = relationService.GetRelationTypeById(RelationTypes.DocumentToDocument);
+            var docToMedia = relationService.GetRelationTypeById(RelationTypes.DocumentToMedia);
             if (docToDoc == null || docToMedia == null)
             {
                 return false;

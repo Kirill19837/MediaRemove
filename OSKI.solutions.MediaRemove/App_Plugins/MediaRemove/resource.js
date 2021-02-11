@@ -2,10 +2,10 @@
         .factory("Our.Umbraco.MediaRemove.Resource", function ($http) {
             return {
                 getRebuildStatus : function() {
-                    return $http.get(Umbraco.Sys.ServerVariables.Nexu.GetRebuildStatus);
+                    return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.RebuildApi + "GetRebuildStatus");
                 },
                 rebuild : function(id) {
-                    return $http.get(Umbraco.Sys.ServerVariables.Nexu.Rebuild + "?id=" + id);
+                    return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.RebuildApi + "Rebuild");
                 },
                 getUnusedMedia : function() {
                     return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.GetUnusedMedia);
