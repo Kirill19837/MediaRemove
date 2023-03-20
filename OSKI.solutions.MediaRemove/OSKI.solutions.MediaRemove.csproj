@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <AssemblyVersion>1.0.3</AssemblyVersion>
-	  <Version>1.0.3</Version>
-	  <InformationalVersion>1.0.3</InformationalVersion>
+	  <AssemblyVersion>1.0.4</AssemblyVersion>
+	  <Version>1.0.4</Version>
+	  <InformationalVersion>1.0.4</InformationalVersion>
 	  <TargetFramework>net6.0</TargetFramework>
 	  <ContentTargetFolders>.</ContentTargetFolders>
 	  <Product>MediaRemove</Product>
@@ -12,7 +12,12 @@
 	  <Description>This package allows you to find and delete media items which aren't used in content. To save required or "hard-coded" media items you can use exclusion list. After installing you will get “Media Remove” tab in settings section.</Description>
 	  <PackageTags>umbraco plugin package umbraco-marketplace</PackageTags>
 	  <Company>$(Authors)</Company>
-	  <Authors>Kyrylo Osadchuk</Authors>
+	  <Authors>OSKI solutions</Authors>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageIcon>logo.png</PackageIcon>
+	  <PackageProjectUrl>https://oski.site/</PackageProjectUrl>
+	  <RepositoryUrl>https://github.com/Kirill19837/MediaRemove.git</RepositoryUrl>
+	  <RepositoryType>git</RepositoryType>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	  <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
