@@ -58,7 +58,7 @@
                 Deleting media in progress ({{DeleteStatus.ItemsProcessed}} items processed out of {{DeleteStatus.ItemsToProcess}})
             </p>
         </div>
-        <div ng-show="filteredMedia.length != 0">
+        <div ng-show="filteredMedia.length !== 0">
             <table class="table">
                 <caption>Unused media</caption>
                 <thead>
@@ -73,10 +73,10 @@
                 <tbody>
                     <tr ng-repeat="link in filteredMedia">
                         <td>{{$index + 1}}</td>
-                        <td>{{link.Name}}</td>
-                        <td>{{link.Path}}</td>
-                        <td ng-show="link.Source != null"><a href="{{link.Source}}">Source</a></td>
-                        <td ng-show="link.Source == null">Source not available</td>
+                        <td>{{link.name}}</td>
+                        <td>{{link.path}}</td>
+                        <td ng-show="link.source != null"><a href="{{link.source}}">Source</a></td>
+                        <td ng-show="link.source == null">Source not available</td>
                         <td><input type="checkbox" ng-model="filteredMedia[$index].ToRemove" ng-change="toRemoveChanged($index)"/></td>
                     </tr>
                 </tbody>

@@ -1,84 +1,177 @@
-﻿using AutoMapper;
-using OSKI.solutions.MediaRemove.Models;
-using Our.Umbraco.Nexu.Core;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Web.Http;
-using Umbraco.Core.Models;
-using Umbraco.Core.Services;
-using Umbraco.Web.Editors;
+using MediaRemove.Interfaces;
+using MediaRemove.Interfaces.Nexu;
+using MediaRemove.Models;
+using Microsoft.AspNetCore.Mvc;
+using Serilog;
+using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Web.Common.Controllers;
+using Umbraco.Extensions;
 
-namespace OSKI.solutions.MediaRemove
+namespace MediaRemove
 {
-    public class MediaRemoveController : UmbracoAuthorizedJsonController
+    public class MediaRemoveController : UmbracoApiController
     {
-        private readonly IMediaService mediaService;
-        private readonly NexuService nexuService;
-        private readonly MediaRemoveService mediaRemoveService;
-        private readonly MediaRemoveContext mediaRemoveContext;
+        private readonly IMediaRemoveService _mediaRemoveService;
+        private readonly IEntityRelationService _nexuService;
+        private readonly IEntityParsingService _entityParsingService;
+        private readonly IContentService _contentService;
+        private readonly IMediaService _mediaService;
+        private readonly ILogger _logger;
 
-        public MediaRemoveController()
+        private readonly MediaRemoveContext _mediaRemoveContext;
+
+        public MediaRemoveController(IMediaRemoveService mediaRemoveService, IEntityRelationService nexuService, IEntityParsingService entityParsingService, IContentService contentService, IMediaService mediaService, ILogger logger)
         {
-            this.mediaService = this.Services.MediaService;
-            this.nexuService = NexuService.Current;
-            mediaRemoveService = MediaRemoveService.Current;
-            mediaRemoveContext = MediaRemoveContext.Current;
+            _mediaRemoveService = mediaRemoveService;
+            _nexuService = nexuService;
+            _entityParsingService = entityParsingService;
+            _contentService = contentService;
+            _mediaService = mediaService;
+            _logger = logger;
+            
+            _mediaRemoveContext = MediaRemoveContext.Current;
         }
 
         [HttpGet]
-        public HttpResponseMessage GetUnusedMedia()
+        public IActionResult GetUnusedMedia()
         {
-            Thread backgroundGetMedia = new Thread(FindUnusedMedia);
-            backgroundGetMedia.IsBackground = true;
-            backgroundGetMedia.Name = "MediaRemove GetUnusedMedia";
+            var backgroundGetMedia = new Thread(FindUnusedMedia)
+            {
+                IsBackground = true,
+                Name = "MediaRemove GetUnusedMedia"
+            };
             backgroundGetMedia.Start();
 
-            return new HttpResponseMessage(HttpStatusCode.OK);
+            return Ok();
         }
 
         [HttpGet]
-        public HttpResponseMessage GetUnusedMediaStatus()
+        public IActionResult GetUnusedMediaStatus()
         {
-            return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingMedia, Data = mediaRemoveContext.UnusedMedia.Select(x => x.Model), TotalCount = mediaRemoveContext.TotalAmountOfMedia });
+            return Ok(new
+            {
+                _mediaRemoveContext.IsProcessingMedia,
+                Data = _mediaRemoveContext.UnusedMedia.Select(x => x.Model),
+                TotalCount = _mediaRemoveContext.TotalAmountOfMedia
+            });
         }
 
         [HttpGet]
-        public HttpResponseMessage DeleteUnusedMediaStatus()
+        public IActionResult DeleteUnusedMediaStatus()
         {
-            return Request.CreateResponse(HttpStatusCode.OK, new { mediaRemoveContext.IsProcessingDeleting, ItemsToProcess = mediaRemoveContext.ItemsToProcessDeleting, ItemsProcessed = mediaRemoveContext.DeletedItemsProcessed, });
+            return Ok(new
+            {
+                _mediaRemoveContext.IsProcessingDeleting,
+                ItemsToProcess = _mediaRemoveContext.ItemsToProcessDeleting,
+                ItemsProcessed = _mediaRemoveContext.DeletedItemsProcessed
+            });
         }
 
         [HttpPost]
-        public HttpResponseMessage DeleteUnusedMedia(int[] ids)
+        public IActionResult DeleteUnusedMedia(int[] ids)
         {
-            Thread backgroundDelete = new Thread(new ParameterizedThreadStart(DeleteMedia))
+            var backgroundDelete = new Thread(DeleteMedia)
             {
                 IsBackground = true,
                 Name = "MediaRemove DeleteMedia"
             };
             backgroundDelete.Start(ids);
 
-            return new HttpResponseMessage(HttpStatusCode.OK);
+            return Ok();
         }
 
         [HttpGet]
-        public HttpResponseMessage IsBuilt()
+        public IActionResult IsBuilt()
         {
-            return Request.CreateResponse(HttpStatusCode.OK, new { IsBuilt = mediaRemoveService.IsBuilt() });
+            return Ok(new
+            {
+                IsBuilt = _mediaRemoveService.IsBuilt()
+            });
         }
+
+        [HttpGet]
+        public IActionResult GetRebuildStatus()
+        {
+            return Ok(new 
+            {
+                NexuContext.Current.IsProcessing,
+                NexuContext.Current.ItemsProcessed,
+                ItemName = NexuContext.Current.ItemInProgress
+            });
+        }
+
+        [HttpGet]
+        public IActionResult Rebuild()
+        {
+            ThreadPool.QueueUserWorkItem(RebuildJob);
+
+            return Ok();
+        }
+
+        public void RebuildJob(object state)
+        {
+            try
+            {
+                NexuContext.Current.IsProcessing = true;
+
+                var rootLevelItems = _contentService.GetRootContent().ToList();
+
+                foreach (var item in rootLevelItems)
+                {
+                    ParseContent(item);
+                }
+
+                long totalRecords = 0;
+                rootLevelItems = _contentService.GetPagedChildren(
+                    Umbraco.Cms.Core.Constants.System.RecycleBinContent,
+                    0,
+                    int.MaxValue,
+                    out totalRecords).ToList();
+
+                foreach (var item in rootLevelItems)
+                {
+                    ParseContent(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("An unhandled exception occurred while parsing content", ex);
+            }
+            finally
+            {
+                NexuContext.Current.IsProcessing = false;
+                NexuContext.Current.ItemsProcessed = 0;
+                NexuContext.Current.ItemInProgress = string.Empty;
+            }
+        }
+
+        private void ParseContent(IContent item)
+        {
+            NexuContext.Current.ItemInProgress = item.Name;
+            _entityParsingService.ParseContent(item);
+            NexuContext.Current.ItemsProcessed++;
+
+            var children = _contentService.GetPagedChildren(item.Id, 0, int.MaxValue, out _).ToList();
+
+            foreach (var child in children)
+            {
+                // parse the content
+                ParseContent(child);
+            }
+        }
+
         private void GetUnusedMediaItems(MediaItemWrapper root)
         {
-            var childs = root.Media.Children();
-            bool found = false;
-            mediaRemoveContext.TotalAmountOfMedia += childs.Count();
-            foreach (var mediaItem in childs)
+            var children = _mediaService.GetPagedChildren(root.Media.Id, 0, int.MaxValue, out _).ToList();
+
+            var found = false;
+            _mediaRemoveContext.TotalAmountOfMedia += children.Count;
+            foreach (var mediaItem in children)
             {
                 found = true;
                 GetUnusedMediaItems(new MediaItemWrapper(mediaItem, root));
@@ -89,42 +182,46 @@ namespace OSKI.solutions.MediaRemove
                 return;
             }
 
-            var relations = nexuService.GetNexuRelationsForContent(root.Media.Id, false);
+            var relations = _nexuService.GetRelationsForItem(root.Media.GetUdi());
             if (!relations.Any())
-                mediaRemoveContext.UnusedMedia.Add(root);
+                _mediaRemoveContext.UnusedMedia.Add(root);
         }
 
         internal void FindUnusedMedia()
         {
-            mediaRemoveContext.UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
-            mediaRemoveContext.IsProcessingMedia = true;
-            mediaRemoveContext.TotalAmountOfMedia = 0;
-            var mediaItems = mediaService.GetRootMedia();
-            mediaRemoveContext.TotalAmountOfMedia += mediaItems.Count();
+            _mediaRemoveContext.UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
+            _mediaRemoveContext.IsProcessingMedia = true;
+            _mediaRemoveContext.TotalAmountOfMedia = 0;
+            var mediaItems = _mediaService.GetRootMedia();
+            _mediaRemoveContext.TotalAmountOfMedia += mediaItems.Count();
+
             foreach (var mediaItem in mediaItems)
             {
                 GetUnusedMediaItems(new MediaItemWrapper(mediaItem));
             }
-            mediaRemoveContext.IsProcessingMedia = false;
+            _mediaRemoveContext.IsProcessingMedia = false;
         }
 
         private void DeleteMedia(object packed)
         {
-            int[] ids = (int[])packed;
+            var ids = (int[])packed;
 
-            mediaRemoveContext.IsProcessingDeleting = true;
-            mediaRemoveContext.ItemsToProcessDeleting = ids.Length;
-            mediaRemoveContext.DeletedItemsProcessed = 0;
-            mediaRemoveContext.TotalAmountOfMedia = 0;
+            _mediaRemoveContext.IsProcessingDeleting = true;
+            _mediaRemoveContext.ItemsToProcessDeleting = ids.Length;
+            _mediaRemoveContext.DeletedItemsProcessed = 0;
+            _mediaRemoveContext.TotalAmountOfMedia = 0;
 
             foreach (var id in ids)
             {
-                mediaService.Delete(mediaService.GetById(id));
-                mediaRemoveContext.DeletedItemsProcessed++;
+                var media = _mediaService.GetById(id);
+                if (media == null) continue;
+
+                _mediaService.Delete(media);
+                _mediaRemoveContext.DeletedItemsProcessed++;
             }
 
-            mediaRemoveContext.IsProcessingDeleting = false;
-            mediaRemoveContext.UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
+            _mediaRemoveContext.IsProcessingDeleting = false;
+            _mediaRemoveContext.UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
         }
     }
 }

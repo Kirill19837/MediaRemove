@@ -57,18 +57,20 @@
             if ($scope.unusedMedia.IsProcessingMedia) {
                 return;
             }
+            $scope.unusedMedia.IsProcessingMedia = true;
             mediaRemoveResource.getUnusedMedia()
                 .then(function () {
-                    $scope.getUnusedMediaStatus();
+                    $timeout(function () {
+                        $scope.getUnusedMediaStatus();
+                    }, 1000);
                 });
         };
 
         $scope.getUnusedMediaStatus = function () {
             mediaRemoveResource.getUnusedMediaStatus()
                 .then(function ({ data }) {
-                    $scope.unusedMedia = data;
                     let count = 0;
-                    data.Data.forEach((x) => {
+                    data.data.forEach((x) => {
                         x.ToRemove = true;
                         count++;
                         if (x.Source) {
@@ -79,12 +81,16 @@
                             }
                             if ($scope.exceptionSources.indexOf(x.Source) > -1) {
                                 x.ToRemove = false;
-                                countr--;
+                                count--;
                             }
                         }
                     });
+
+                    $scope.unusedMedia.Data = data.data;
                     $scope.toBeDeletedAmount = count;
-                    $scope.filteredMedia = data.Data;
+                    $scope.filteredMedia = data.data;
+                    $scope.unusedMedia.IsProcessingMedia = false;
+                    $scope.unusedMedia.TotalCount = data.totalCount;
                     if ($scope.unusedMedia.IsProcessingMedia) {
                         $timeout(function () { $scope.getUnusedMediaStatus() }, 5000, true);
                     }
@@ -92,7 +98,7 @@
         };
 
         $scope.deleteUnusedMedia = function () {
-            if ($scope.filteredMedia.length == 0 && $scope.unusedMedia.IsProcessingMedia) {
+            if ($scope.filteredMedia.length === 0 && $scope.unusedMedia.IsProcessingMedia) {
                 return;
             }
             let forDeleting = [];
@@ -101,11 +107,13 @@
                     forDeleting.push(x);
                 }
             });
-            let ids = forDeleting.map(x => x.Id);
+            let ids = forDeleting.map(x => x.id);
             mediaRemoveResource.deleteUnusedMedia(ids)
                 .then(function () {
                     $scope.getDeleteMediaStatus();
-                    $scope.filteredMedia = [];
+                    $scope.filteredMedia = $scope.filteredMedia.filter(m => m.ToRemove === false);
+                    $scope.unusedMedia.Data = []; 
+                    $scope.toBeDeletedAmount = 0; 
                 });
         };
 

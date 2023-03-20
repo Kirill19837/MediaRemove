@@ -2,25 +2,25 @@
         .factory("Our.Umbraco.MediaRemove.Resource", function ($http) {
             return {
                 getRebuildStatus : function() {
-                    return $http.get(Umbraco.Sys.ServerVariables.Nexu.GetRebuildStatus);
+                    return $http.get("/umbraco/api/mediaRemove/" + "GetRebuildStatus");
                 },
                 rebuild : function(id) {
-                    return $http.get(Umbraco.Sys.ServerVariables.Nexu.Rebuild + "?id=" + id);
+                    return $http.get("/umbraco/api/mediaRemove/" + "Rebuild");
                 },
                 getUnusedMedia : function() {
-                    return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.GetUnusedMedia);
+                    return $http.get("/umbraco/api/mediaRemove/" + "GetUnusedMedia");
                 },
                 deleteUnusedMedia: function(ids) {
-                    return $http.post(Umbraco.Sys.ServerVariables.MediaRemove.DeleteUnusedMedia, ids);
+                    return $http.post("/umbraco/api/mediaRemove/" + "DeleteUnusedMedia", ids);
                 },
                 getUnusedMediaStatus: function() {
-                    return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.GetUnusedMediaStatus);
+                    return $http.get("/umbraco/api/mediaRemove/" + "GetUnusedMediaStatus");
                 },
                 getBuiltStatus : function() {
-                    return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.IsBuilt);
+                    return $http.get("/umbraco/api/mediaRemove/" + "IsBuilt");
                 },
                 getDeleteMediaStatus: function () {
-                    return $http.get(Umbraco.Sys.ServerVariables.MediaRemove.DeleteUnusedMediaStatus);
+                    return $http.get("/umbraco/api/mediaRemove/" + "DeleteUnusedMediaStatus");
                 }
             };
         });

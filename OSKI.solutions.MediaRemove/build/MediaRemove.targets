@@ -1,0 +1,21 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<MediaRemoveContentFilesPath>$(MSBuildThisFileDirectory)..\App_Plugins\MediaRemove\**\*.*</MediaRemoveContentFilesPath>
+	</PropertyGroup>
+
+	<Target Name="CopyMediaRemoveAssets" BeforeTargets="Build">
+		<ItemGroup>
+			<MediaRemoveContentFiles Include="$(MediaRemoveContentFilesPath)" />
+		</ItemGroup>
+		<Message Text="Copying MediaRemove files: $(MediaRemoveContentFilesPath) - #@(NestedPagesViewContentFiles->Count()) files" Importance="high" />
+		<Copy SourceFiles="@(MediaRemoveContentFiles)" DestinationFiles="@(MediaRemoveContentFiles->'$(MSBuildProjectDirectory)\App_Plugins\MediaRemove\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+	</Target>
+    
+	<Target Name="ClearMediaRemoveAssets" BeforeTargets="Clean">
+		<ItemGroup>
+			<MediaRemoveViewDir Include="$(MSBuildProjectDirectory)\App_Plugins\MediaRemove\" />
+		</ItemGroup>
+		<Message Text="Clear old MediaRemove data" Importance="high" />
+		<RemoveDir Directories="@(MediaRemoveViewDir)" />
+	</Target>
+</Project>

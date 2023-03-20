@@ -1,24 +1,19 @@
-﻿using OSKI.solutions.MediaRemove.Models;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
+using MediaRemove.Models;
 
-namespace OSKI.solutions.MediaRemove
+namespace MediaRemove
 {
     public class MediaRemoveContext
     {
-        private static MediaRemoveContext instance;
+        private static MediaRemoveContext _instance;
         public MediaRemoveContext()
         {
-            this.UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
-            this.IsProcessingMedia = false;
-            instance = this;
+            UnusedMedia = new ConcurrentBag<MediaItemWrapper>();
+            IsProcessingMedia = false;
+            _instance = this;
         }
 
-        public static MediaRemoveContext Current => instance ?? new MediaRemoveContext();
+        public static MediaRemoveContext Current => _instance ?? new MediaRemoveContext();
         public ConcurrentBag<MediaItemWrapper> UnusedMedia { get; set; }
         public bool IsProcessingMedia { get; set; }
         public bool IsProcessingDeleting { get; set; }
