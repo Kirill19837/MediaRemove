@@ -4,7 +4,7 @@
     {
         public override bool IsParserFor(string propertyEditorAlias)
         {
-            return propertyEditorAlias.Equals("Umbraco.BlockList");
+            return propertyEditorAlias.Equals(Umbraco.Cms.Core.Constants.PropertyEditors.Aliases.BlockList);
         }
     }
 }

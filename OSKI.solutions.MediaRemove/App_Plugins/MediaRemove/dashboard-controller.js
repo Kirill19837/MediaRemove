@@ -1,8 +1,8 @@
 ﻿angular.module('umbraco').controller('Our.Umbraco.MediaRemove.DashboardController',
     ['$scope', 'Our.Umbraco.MediaRemove.Resource', '$timeout', function ($scope, mediaRemoveResource, $timeout) {
-        $scope.isLoading = true;
+        $scope.isLoading = false;
         $scope.RebuildStatus = {
-            IsProcessing: true,
+            IsProcessing: false,
             ItemName: '',
             ItemsProcessed: 0
         };
@@ -26,12 +26,18 @@
         $scope.getRebuildStatus = function () {
             mediaRemoveResource.getRebuildStatus()
                 .then(function (result) {
-                    $scope.isLoading = false;
-                    $scope.RebuildStatus = result.data;
+                    $scope.$applyAsync(function () {
+                        $scope.RebuildStatus.IsProcessing = result.data.isProcessing;
+                        $scope.RebuildStatus.ItemName = result.data.itemName;
+                        $scope.RebuildStatus.ItemsProcessed = result.data.itemsProcessed;
 
-                    if ($scope.RebuildStatus.IsProcessing && $scope.autoRefresh) {
-                        $timeout(function () { $scope.getRebuildStatus() }, 5000, true);
-                    }
+                        if ($scope.RebuildStatus.IsProcessing && $scope.autoRefresh) {
+                            $timeout(function () { $scope.getRebuildStatus() }, 500, true);
+                        }
+                        else {
+                            $scope.isBuiltRelations = false;
+                        }
+                    });
                 });
         };
 
@@ -39,12 +45,11 @@
             if ($scope.isBuiltRelations) {
                 return;
             }
+            $scope.isBuiltRelations = true;
             mediaRemoveResource.rebuild(-1)
                 .then(function (result) {
-                    $scope.getRebuildStatus();
-                    $scope.isBuiltRelations = true;
+                    $timeout(function () { $scope.getRebuildStatus() }, 500, true);
                 });
-            $timeout(function () { $scope.getRebuildStatus() }, 500, true);
         };
 
         $scope.getBuiltStatus = function () {
@@ -77,7 +82,7 @@
                             try {
                                 x.Source = JSON.parse(x.Source).src;
                             } catch (ex) {
-                                if(console) console.log(ex);
+                                if (console) console.log(ex);
                             }
                             if ($scope.exceptionSources.indexOf(x.Source) > -1) {
                                 x.ToRemove = false;
@@ -86,14 +91,19 @@
                         }
                     });
 
-                    $scope.unusedMedia.Data = data.data;
-                    $scope.toBeDeletedAmount = count;
-                    $scope.filteredMedia = data.data;
-                    $scope.unusedMedia.IsProcessingMedia = false;
-                    $scope.unusedMedia.TotalCount = data.totalCount;
-                    if ($scope.unusedMedia.IsProcessingMedia) {
-                        $timeout(function () { $scope.getUnusedMediaStatus() }, 5000, true);
-                    }
+                    $scope.$applyAsync(function () {
+                        $scope.unusedMedia.Data = data.data;
+                        $scope.toBeDeletedAmount = count;
+                        $scope.filteredMedia = data.data;
+                        $scope.unusedMedia.IsProcessingMedia = data.isProcessingMedia;
+                        $scope.unusedMedia.TotalCount = data.totalCount;
+
+                        if ($scope.unusedMedia.IsProcessingMedia) {
+                            $timeout(function () {
+                                $scope.getUnusedMediaStatus();
+                            }, 1000, true);
+                        }
+                    });
                 });
         };
 
@@ -110,20 +120,31 @@
             let ids = forDeleting.map(x => x.id);
             mediaRemoveResource.deleteUnusedMedia(ids)
                 .then(function () {
-                    $scope.getDeleteMediaStatus();
-                    $scope.filteredMedia = $scope.filteredMedia.filter(m => m.ToRemove === false);
-                    $scope.unusedMedia.Data = []; 
-                    $scope.toBeDeletedAmount = 0; 
+                    $scope.$applyAsync(function () {
+                        $scope.filteredMedia = $scope.filteredMedia.filter(m => m.ToRemove != false);
+                        $timeout(function () {
+                            $scope.getDeleteMediaStatus();
+                        }, 1000);
+                    })
                 });
         };
 
         $scope.getDeleteMediaStatus = function () {
             mediaRemoveResource.getDeleteMediaStatus()
                 .then(function ({ data }) {
-                    $scope.DeleteStatus = data;
-                    if ($scope.DeleteStatus.IsProcessingDeleting) {
-                        $timeout(function () { $scope.getDeleteMediaStatus() }, 5000, true);
-                    }
+                    $scope.$applyAsync(function () {
+                        $scope.DeleteStatus.IsProcessingDeleting = data.isProcessingDeleting;
+                        $scope.DeleteStatus.ItemsProcessed = data.itemsProcessed;
+                        $scope.DeleteStatus.ItemsToProcess = data.itemsToProcess;
+
+                        if ($scope.DeleteStatus.IsProcessingDeleting) {
+                            $timeout(function () { $scope.getDeleteMediaStatus() }, 1000, true);
+                        }
+                        else {
+                            $scope.filteredMedia = [];
+                        }
+                    })
+
                 });
         };
 

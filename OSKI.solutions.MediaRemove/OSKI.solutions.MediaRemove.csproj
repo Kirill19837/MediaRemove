@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <AssemblyVersion>1.0.4</AssemblyVersion>
-	  <Version>1.0.4</Version>
-	  <InformationalVersion>1.0.4</InformationalVersion>
-	  <TargetFramework>net6.0</TargetFramework>
+	  <AssemblyVersion>1.0.5</AssemblyVersion>
+	  <Version>1.0.5</Version>
+	  <InformationalVersion>1.0.5</InformationalVersion>
+	  <TargetFramework>net8.0</TargetFramework>
 	  <ContentTargetFolders>.</ContentTargetFolders>
 	  <Product>MediaRemove</Product>
 	  <PackageId>MediaRemove</PackageId>
@@ -20,6 +20,10 @@
 	  <RepositoryType>git</RepositoryType>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	  <PackageIcon>logo.png</PackageIcon>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <PackageReleaseNotes>
+			Support Umbraco V13
+	  </PackageReleaseNotes>
   </PropertyGroup>
   
 	<ItemGroup>
@@ -34,6 +38,10 @@
 	</ItemGroup>
   
 	<ItemGroup>
+	  <None Include="README.md" Pack="true" />
+	</ItemGroup>
+  
+	<ItemGroup>
 	  <Folder Include="Constants\" />
 	  <Folder Include="MyNugetPackages\" />
 	</ItemGroup>
@@ -43,7 +51,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Serilog" Version="2.12.0" />
-	  <PackageReference Include="Umbraco.Cms.Web.Website" Version="10.4.0" />
+	  <PackageReference Include="Serilog" Version="4.1.0" />
+	  <PackageReference Include="Umbraco.Cms.Web.Website" Version="13.0.0" />
 	</ItemGroup>
 </Project>
