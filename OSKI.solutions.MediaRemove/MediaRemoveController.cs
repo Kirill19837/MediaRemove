@@ -22,10 +22,11 @@ namespace MediaRemove
         private readonly IContentService _contentService;
         private readonly IMediaService _mediaService;
         private readonly ILogger _logger;
+        private readonly NexuContext _nexuContext;
 
         private readonly MediaRemoveContext _mediaRemoveContext;
 
-        public MediaRemoveController(IMediaRemoveService mediaRemoveService, IEntityRelationService nexuService, IEntityParsingService entityParsingService, IContentService contentService, IMediaService mediaService, ILogger logger)
+        public MediaRemoveController(IMediaRemoveService mediaRemoveService, IEntityRelationService nexuService, IEntityParsingService entityParsingService, IContentService contentService, IMediaService mediaService, ILogger logger, NexuContext nexuContext)
         {
             _mediaRemoveService = mediaRemoveService;
             _nexuService = nexuService;
@@ -33,8 +34,9 @@ namespace MediaRemove
             _contentService = contentService;
             _mediaService = mediaService;
             _logger = logger;
-            
+
             _mediaRemoveContext = MediaRemoveContext.Current;
+            _nexuContext = nexuContext;
         }
 
         [HttpGet]
@@ -99,9 +101,9 @@ namespace MediaRemove
         {
             return Ok(new 
             {
-                NexuContext.Current.IsProcessing,
-                NexuContext.Current.ItemsProcessed,
-                ItemName = NexuContext.Current.ItemInProgress
+                _nexuContext.IsProcessing,
+                _nexuContext.ItemsProcessed,
+                ItemName = _nexuContext.ItemInProgress
             });
         }
 
@@ -117,7 +119,7 @@ namespace MediaRemove
         {
             try
             {
-                NexuContext.Current.IsProcessing = true;
+                _nexuContext.IsProcessing = true;
 
                 var rootLevelItems = _contentService.GetRootContent().ToList();
 
@@ -144,17 +146,17 @@ namespace MediaRemove
             }
             finally
             {
-                NexuContext.Current.IsProcessing = false;
-                NexuContext.Current.ItemsProcessed = 0;
-                NexuContext.Current.ItemInProgress = string.Empty;
+                _nexuContext.IsProcessing = false;
+                _nexuContext.ItemsProcessed = 0;
+                _nexuContext.ItemInProgress = string.Empty;
             }
         }
 
         private void ParseContent(IContent item)
         {
-            NexuContext.Current.ItemInProgress = item.Name;
+            _nexuContext.ItemInProgress = item.Name;
             _entityParsingService.ParseContent(item);
-            NexuContext.Current.ItemsProcessed++;
+            _nexuContext.ItemsProcessed++;
 
             var children = _contentService.GetPagedChildren(item.Id, 0, int.MaxValue, out _).ToList();
 
@@ -216,7 +218,10 @@ namespace MediaRemove
                 var media = _mediaService.GetById(id);
                 if (media == null) continue;
 
-                _mediaService.Delete(media);
+                //move to recycle bin or delete based on app settings
+                if(_nexuContext.PreventDelete) _mediaService.MoveToRecycleBin(media);
+                else _mediaService.Delete(media);
+
                 _mediaRemoveContext.DeletedItemsProcessed++;
             }
 

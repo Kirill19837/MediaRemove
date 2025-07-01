@@ -7,6 +7,7 @@ using MediaRemove.Services;
 using MediaRemove.Services.Nexu;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using OSKI.solutions.MediaRemove.Models.Nexu;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Notifications;
@@ -26,6 +27,9 @@ namespace MediaRemove.Composing
 
             builder.AddComponent<MigrationComponent>();
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
+
+            builder.Services.AddSingleton<NexuContext>();
+            builder.Services.Configure<NexuSettings>(builder.Config.GetSection("Nexu"));
         }
     }
 }

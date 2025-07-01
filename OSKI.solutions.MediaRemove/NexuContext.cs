@@ -1,12 +1,11 @@
-﻿using System.Configuration;
-using MediaRemove.Constants;
-using Umbraco.Extensions;
+﻿using Microsoft.Extensions.Options;
+using OSKI.solutions.MediaRemove.Models.Nexu;
 
 namespace MediaRemove
 {
     public class NexuContext
     {
-        private static NexuContext _instance;
+        private readonly NexuSettings _settings;
 
         private static readonly object Padlock = new();
 
@@ -16,25 +15,12 @@ namespace MediaRemove
 
         private int _itemsProcessed;
 
-        private NexuContext()
+        public NexuContext(IOptions<NexuSettings> options)
         {
+            _settings = options.Value;
             _isProcessing = false;
             _itemInProgress = string.Empty;
             _itemsProcessed = 0;
-            PreventDelete = GetAppSetting(AppSettings.PreventDelete, false);
-            PreventUnPublish = GetAppSetting(AppSettings.PreventUnpublish, false);
-            _instance = this;
-        }
-
-        public static NexuContext Current
-        {
-            get
-            {
-                lock (Padlock)
-                {
-                    return _instance ??= new NexuContext();
-                }
-            }
         }
 
         public bool IsProcessing
@@ -73,23 +59,8 @@ namespace MediaRemove
             }
         }
 
-        public bool PreventDelete { get; }
+        public bool PreventDelete => _settings.PreventDelete;
 
-        public bool PreventUnPublish { get; set; }
-
-        private static T GetAppSetting<T>(string key, T defaultValue)
-        {
-            var value = defaultValue;
-
-            var setting = ConfigurationManager.AppSettings[key];
-
-            if (setting == null) return value;
-
-            var attempConvert = setting.TryConvertTo<T>();
-
-            if (attempConvert.Success) value = attempConvert.Result;
-
-            return value;
-        }
+        public bool PreventUnPublish => _settings.PreventUnpublish;
     }
 }

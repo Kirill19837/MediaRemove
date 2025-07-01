@@ -141,7 +141,9 @@
                             $timeout(function () { $scope.getDeleteMediaStatus() }, 1000, true);
                         }
                         else {
-                            $scope.filteredMedia = [];
+                            const remainingIds = $scope.filteredMedia.map(m => m.id);
+                            $scope.unusedMedia.Data = $scope.unusedMedia.Data.filter(m => !remainingIds.includes(m.id));
+                            $scope.filteredMedia = $scope.unusedMedia.Data;
                         }
                     })
 
