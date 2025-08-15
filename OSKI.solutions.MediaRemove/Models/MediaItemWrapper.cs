@@ -51,7 +51,7 @@ namespace MediaRemove.Models
                 try
                 {
                     using var jsonDoc = JsonDocument.Parse(rawValue);
-                    if (jsonDoc.RootElement.TryGetProperty("src", out var src)) return src.GetString();
+                    if (jsonDoc.RootElement.TryGetProperty(PluginConstants.Props.MediaSourceProp, out var src)) return src.GetString();
                 }
                 catch { /* fallback to raw string */ }
             }
