@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <AssemblyVersion>1.0.5</AssemblyVersion>
-	  <Version>1.0.5</Version>
-	  <InformationalVersion>1.0.5</InformationalVersion>
+	  <AssemblyVersion>1.0.6</AssemblyVersion>
+	  <Version>1.0.6</Version>
+	  <InformationalVersion>1.0.6</InformationalVersion>
 	  <TargetFramework>net8.0</TargetFramework>
 	  <ContentTargetFolders>.</ContentTargetFolders>
 	  <Product>MediaRemove</Product>
@@ -22,7 +22,7 @@
 	  <PackageIcon>logo.png</PackageIcon>
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
 	  <PackageReleaseNotes>
-			Support Umbraco V13
+		  Enriched media source data with "Backoffice Direct Edit Link", "Source Link", "Media Type"
 	  </PackageReleaseNotes>
   </PropertyGroup>
   
