@@ -2,7 +2,7 @@
 {
     public static class PluginConstants
     {
-        public static readonly string MediaEditDirectLinkTemplate = "{0}/umbraco#/media/media/edit/{1}"; // {0} = site base URL, {1} = media ID
+        public static readonly string MediaEditDirectLinkTemplate = "/umbraco#/media/media/edit/{0}"; // {0} = media ID
     
         public static class Props
         {

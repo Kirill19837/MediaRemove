@@ -79,7 +79,7 @@ namespace MediaRemove.Models
 
         private string GetBackOfficeLink(int mediaId)
         {
-            return string.Format(PluginConstants.MediaEditDirectLinkTemplate, "", mediaId);
+            return string.Format(PluginConstants.MediaEditDirectLinkTemplate, mediaId);
         }
 
         private bool IsJson(string rawValue)
