@@ -66,7 +66,9 @@
                         <th>Index</th>
                         <th>Name</th>
                         <th>Path</th>
+                        <th>Type</th>
                         <th>Source</th>
+                        <th>Backoffice Link</th>
                         <th>ToRemove</th>
                     </tr>
                 </thead>
@@ -75,9 +77,12 @@
                         <td>{{$index + 1}}</td>
                         <td>{{link.name}}</td>
                         <td>{{link.path}}</td>
+                        <td>{{link.mediaType}}</td>
                         <td ng-show="link.source != null"><a href="{{link.source}}">Source</a></td>
                         <td ng-show="link.source == null">Source not available</td>
-                        <td><input type="checkbox" ng-model="filteredMedia[$index].ToRemove" ng-change="toRemoveChanged($index)"/></td>
+                        <td ng-show="link.backofficeLink != null"><a href="{{link.backofficeLink}}">Edit Link</a></td>
+                        <td ng-show="link.backofficeLink == null">Edit Link not available</td>
+                        <td><input type="checkbox" ng-model="filteredMedia[$index].ToRemove" ng-change="toRemoveChanged($index)" /></td>
                     </tr>
                 </tbody>
             </table>
